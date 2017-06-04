@@ -618,6 +618,7 @@ subdirs += \
 	device/generic \
 	device/lge \
 	device/samsung \
+	device/sony \
 	device/qcom/common \
 	vendor/oneplus/bacon \
 	vendor/oppo/msm8974-common \
@@ -632,6 +633,7 @@ subdirs += \
 	vendor/nxp \
 	vendor/qcom \
 	vendor/samsung \
+	vendor/sony \
 	vendor/widevine
 
 # Specific projects for Ubuntu Touch
