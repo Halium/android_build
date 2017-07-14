@@ -479,11 +479,7 @@ INTERNAL_RAMDISK_FILES := $(filter $(TARGET_ROOT_OUT)/%, \
 	$(ALL_GENERATED_SOURCES) \
 	$(ALL_DEFAULT_INSTALLED_MODULES))
 
-# Default ramdisk comes now from Ubuntu
-INTERNAL_UBUNTURAMDISK_FILES := \
-    $(filter $(TARGET_OUT_UBUNTU_RAMDISK)/%,$(ALL_DEFAULT_INSTALLED_MODULES))
-
-BUILT_RAMDISK_TARGET := $(PRODUCT_OUT)/ramdisk-ubuntu.img
+BUILT_RAMDISK_TARGET := $(call intermediates-dir-for,ROOT,hybris-boot,)/boot-initramfs.gz
 BUILT_RAMDISK_TARGET_ANDROID := $(PRODUCT_OUT)/ramdisk-android.img
 
 # We just build this directly to the install location.
@@ -498,37 +494,13 @@ $(BOOT_ANDROID_RAMDISK_IMG): $(INSTALLED_RAMDISK_TARGET_ANDROID)
 	$(hide) mkdir -p $(dir $@)
 	$(hide) $(ACP) $(INSTALLED_RAMDISK_TARGET_ANDROID) $@
 
-# Halium initrd
-TARGET_UBUNTU_INITRD_REPO := $(PWD)/halium/prebuilt-initrd/initrd.img-touch
+# hybris-boot initrd
 INSTALLED_RAMDISK_TARGET := $(BUILT_RAMDISK_TARGET)
 
-# TODO add arm64
-ifeq ($(TARGET_ARCH),x86)
-TARGET_UBUNTU_ARCH := i386
-else
-TARGET_UBUNTU_ARCH := armhf
-endif
-
-.PHONY: $(INSTALLED_RAMDISK_TARGET)
-$(INSTALLED_RAMDISK_TARGET): $(MKBOOTFS) $(INTERNAL_UBUNTURAMDISK_FILES) | $(MINIGZIP)
-	$(call pretty,"Target Halium ram disk: $@")
-	$(hide) rm -rf $(TARGET_OUT_UBUNTU_INITRD)
-	$(hide) mkdir -p $(TARGET_OUT_UBUNTU_INITRD)
-	$(call pretty,"Using local initrd repo:$(TARGET_UBUNTU_INITRD_REPO)")
-	$(hide) $(ACP) $(TARGET_UBUNTU_INITRD_REPO) $@
-	$(hide) cd $(TARGET_OUT_UBUNTU_INITRD) && $(MINIGZIP) -c -d $@ | cpio -id
-ifdef BOARD_OVERLAY_INITRD
-	$(hide) if [ -d $(TARGET_OUT_UBUNTU_RAMDISK) ]; then cp -r $(TARGET_OUT_UBUNTU_RAMDISK)/* $(TARGET_OUT_UBUNTU_INITRD); fi
-	$(call pretty,"Repacking ubuntu ramdisk to: $@")
-	$(hide) cd $(TARGET_OUT_UBUNTU_INITRD) && find . | cpio -o -H newc | $(MINIGZIP) > $@
-endif
-
 .PHONY: ramdisk-nodeps
-ramdisk-nodeps: $(MKBOOTFS) | $(MINIGZIP)
-	@echo "make $@: ignoring dependencies"
-	$(call pretty,"Target Android ram disk: $@")
-	$(hide) $(MKBOOTFS) $(TARGET_ROOT_OUT) | $(MINIGZIP) > $(INSTALLED_RAMDISK_TARGET_ANDROID)
-	$(hide) $(ACP) $(INSTALLED_RAMDISK_TARGET_ANDROID) $(BOOT_ANDROID_RAMDISK_IMG)
+ramdisk-nodeps: $(INSTALLED_RAMDISK_TARGET)
+
+# Actual rules of $(INSTALLED_RAMDISK_TARGET) is defined in halium/hybris-boot
 
 ifneq ($(strip $(TARGET_NO_KERNEL)),true)
 
@@ -572,7 +544,7 @@ endif
 
 INSTALLED_BOOTIMAGE_TARGET_ANDROID := $(PRODUCT_OUT)/android-boot.img
 
-INSTALLED_BOOTIMAGE_TARGET := $(PRODUCT_OUT)/boot.img
+INSTALLED_BOOTIMAGE_TARGET := $(PRODUCT_OUT)/hybris-boot.img
 
 ifeq ($(TARGET_BOOTIMAGE_USE_EXT2),true)
 tmp_dir_for_image := $(call intermediates-dir-for,EXECUTABLES,boot_img)/bootimg
@@ -585,17 +557,10 @@ $(INSTALLED_BOOTIMAGE_TARGET_ANDROID): $(MKEXT2IMG) $(INTERNAL_BOOTIMAGE_FILES_A
 	$(call pretty,"Target boot image for Android: $@")
 	$(hide) $(MKEXT2BOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS_ANDROID) --output $@
 
-$(INSTALLED_BOOTIMAGE_TARGET): $(MKEXT2IMG) $(INTERNAL_BOOTIMAGE_FILES)
-	$(call pretty,"Target boot image for Halium: $@")
-	$(hide) $(MKEXT2BOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) --output $@
-	@echo -e ${CL_CYN}"Made boot image: $@"${CL_RST}
-
 .PHONY: bootimage-nodeps
-bootimage-nodeps: $(MKEXT2IMG)
-	@echo "make $@: ignoring dependencies"
-	$(call pretty,"Repacking ubuntu ramdisk to: $(INSTALLED_RAMDISK_TARGET)")
-	$(hide) cd $(TARGET_OUT_UBUNTU_INITRD) && find . | cpio -o -H newc | $(MINIGZIP) > $(INSTALLED_RAMDISK_TARGET)
-	$(hide) $(MKEXT2BOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) --output $(INSTALLED_BOOTIMAGE_TARGET)
+bootimage-nodeps: $(INSTALLED_BOOTIMAGE_TARGET)
+
+# Actual rules of $(INSTALLED_BOOTIMAGE_TARGET) is defined in halium/hybris-boot
 
 else ifndef BOARD_CUSTOM_BOOTIMG_MK
 
@@ -605,20 +570,10 @@ $(INSTALLED_BOOTIMAGE_TARGET_ANDROID): $(MKEXT2IMG) $(INTERNAL_BOOTIMAGE_FILES_A
 	$(call pretty,"Target boot image for Android: $@")
 	$(hide) $(MKEXT2BOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS_ANDROID) --output $@
 
-$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES) $(BOOT_SIGNER) $(BOOTIMAGE_EXTRA_DEPS)
-	$(call pretty,"Target boot image for Halium: $@")
-	$(hide) $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $@
-	$(BOOT_SIGNER) /boot $@ $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_VERITY_SIGNING_KEY) $@
-	$(hide) $(call assert-max-image-size,$@,$(BOARD_BOOTIMAGE_PARTITION_SIZE))
-
 .PHONY: bootimage-nodeps
-bootimage-nodeps: $(MKBOOTIMG) $(BOOT_SIGNER)
-	@echo "make $@: ignoring dependencies"
-	$(call pretty,"Repacking Halium ramdisk to: $(INSTALLED_RAMDISK_TARGET)")
-	$(hide) cd $(TARGET_OUT_UBUNTU_INITRD) && find . | cpio -o -H newc | $(MINIGZIP) >$(INSTALLED_RAMDISK_TARGET)
-	$(hide) $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(INSTALLED_BOOTIMAGE_TARGET)
-	$(BOOT_SIGNER) /boot $(INSTALLED_BOOTIMAGE_TARGET) $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_VERITY_SIGNING_KEY).pk8 $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_VERITY_SIGNING_KEY).x509.pem $(INSTALLED_BOOTIMAGE_TARGET)
-	$(hide) $(call assert-max-image-size,$(INSTALLED_BOOTIMAGE_TARGET),$(BOARD_BOOTIMAGE_PARTITION_SIZE))
+bootimage-nodeps: $(INSTALLED_BOOTIMAGE_TARGET)
+
+# Actual rules of $(INSTALLED_BOOTIMAGE_TARGET) is defined in halium/hybris-boot
 
   else # PRODUCT_SUPPORTS_VERITY != true
 INTERNAL_BOOTIMAGE_ARGS += $(INTERNAL_BOOTIMAGE_ARGS_COMMON)
@@ -629,20 +584,10 @@ $(INSTALLED_BOOTIMAGE_TARGET_ANDROID): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES_A
 	$(hide) $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS_ANDROID) $(BOARD_MKBOOTIMG_ARGS) --output $@
 	$(hide) $(call assert-max-image-size,$@,$(BOARD_BOOTIMAGE_PARTITION_SIZE),raw)
 
-$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES) $(BOOTIMAGE_EXTRA_DEPS)
-	$(call pretty,"Target boot image for Halium: $@")
-	$(hide) $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $@
-	$(hide) $(call assert-max-image-size,$@,$(BOARD_BOOTIMAGE_PARTITION_SIZE))
-	@echo -e ${CL_CYN}"Made boot image: $@"${CL_RST}
-
 .PHONY: bootimage-nodeps
-bootimage-nodeps: $(MKBOOTIMG)
-	@echo "make $@: ignoring dependencies"
-	$(call pretty,"Repacking Halium ramdisk to: $(INSTALLED_RAMDISK_TARGET)")
-	$(hide) cd $(TARGET_OUT_UBUNTU_INITRD) && find . | cpio -o -H newc | $(MINIGZIP) > $(INSTALLED_RAMDISK_TARGET)
-	$(hide) $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(INSTALLED_BOOTIMAGE_TARGET)
-	$(hide) $(call assert-max-image-size,$(INSTALLED_BOOTIMAGE_TARGET),$(BOARD_BOOTIMAGE_PARTITION_SIZE))
-	@echo -e ${CL_INS}"Made boot image: $@"${CL_RST}
+bootimage-nodeps: $(INSTALLED_BOOTIMAGE_TARGET)
+
+# Actual rules of $(INSTALLED_BOOTIMAGE_TARGET) is defined in halium/hybris-boot
 
   endif # PRODUCT_SUPPORTS_VERITY
 endif # TARGET_BOOTIMAGE_USE_EXT2 / BOARD_CUSTOM_BOOTIMG_MK
