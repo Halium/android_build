@@ -1730,4 +1730,9 @@ check_bash_version && {
 
 export ANDROID_BUILD_TOP=$(gettop)
 
+function boot_zip_gen()
+{
+$ANDROID_BUILD_TOP/build/tools/releasetools/hybris_zip_gen.sh
+}
+
 . $ANDROID_BUILD_TOP/vendor/cm/build/envsetup.sh
