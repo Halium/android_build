@@ -486,10 +486,12 @@ subdirs := \
 	development/tools/emulator/opengl \
 	external/aac \
 	external/boringssl \
+	external/bson \
 	external/busybox \
 	external/bzip2 \
 	external/checkpolicy \
 	external/compiler-rt \
+	external/connectivity \
 	external/clang \
 	external/e2fsprogs \
 	external/elfutils \
@@ -510,6 +512,8 @@ subdirs := \
 	external/f2fs-tools \
 	external/icu/icu4c \
 	external/icu/android_utils \
+	external/iproute2 \
+	external/iptables \
 	external/nanopb-c \
 	external/libpcap \
 	external/libcap \
@@ -526,6 +530,7 @@ subdirs := \
 	external/liblzf \
 	external/libnl \
 	external/libavc \
+	external/lz4 \
 	external/lzma \
 	external/toybox \
 	external/libgsm \
@@ -622,6 +627,7 @@ subdirs := \
 	system/extras/ext4_utils \
 	system/extras/libfec \
 	system/extras/f2fs_utils \
+	system/extras/mkimage \
 	system/extras/squashfs_utils \
 	system/media/audio_utils \
 	system/media/camera \
