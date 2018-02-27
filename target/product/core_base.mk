@@ -56,6 +56,7 @@ PRODUCT_PACKAGES += \
     libvariablespeed \
     libwebrtc_audio_preprocessing \
     mdnsd \
+    mediacodecservice \
     recovery_resize2fs \
     requestsync \
     libadf \

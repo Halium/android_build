@@ -589,6 +589,7 @@ subdirs := \
 	frameworks/av/services/audioflinger \
 	frameworks/av/services/audiopolicy \
 	frameworks/av/services/medialog \
+	frameworks/av/services/mediacodec \
 	frameworks/av/services/mediaresourcemanager \
 	frameworks/av/services/camera/libcameraservice \
 	frameworks/av/soundtrigger \
@@ -644,7 +645,8 @@ subdirs += \
 
 # Specific projects for Halium
 subdirs += \
-	halium/hybris-boot
+	halium/hybris-boot \
+	halium/droidmedia
 
 FULL_BUILD := true
 
