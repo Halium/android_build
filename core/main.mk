@@ -512,6 +512,8 @@ subdirs := \
 	external/f2fs-tools \
 	external/icu/icu4c \
 	external/icu/android_utils \
+	external/iproute2 \
+	external/iptables \
 	external/nanopb-c \
 	external/libpcap \
 	external/libcap \
