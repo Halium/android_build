@@ -549,6 +549,7 @@ subdirs := \
 	external/llvm \
 	external/libxml2 \
 	external/libyuv \
+	external/libcurl \
 	external/mdnsresponder \
 	external/mksh \
 	external/openssl \
