@@ -665,7 +665,8 @@ subdirs += \
 	halium/droidmedia \
 	halium/audioflingerglue \
 	halium/platform-api \
-	halium/halium-boot
+	halium/halium-boot \
+	halium/biometryd
 
 FULL_BUILD := true
 
