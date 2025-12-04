@@ -490,6 +490,7 @@ subdirs := \
 	external/bson \
 	external/busybox \
 	external/bzip2 \
+	external/libarchive/contrib/android \
 	external/checkpolicy \
 	external/compiler-rt \
 	external/connectivity \
