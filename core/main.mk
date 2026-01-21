@@ -562,7 +562,6 @@ subdirs := \
 	external/protobuf \
 	external/qemu \
 	external/scrypt \
-	external/sepolicy \
 	external/sfntly \
 	external/skia \
 	external/sonic \
@@ -651,7 +650,6 @@ subdirs := \
 	system/security/keystore-engine \
 	system/keymaster \
 	system/gatekeeper \
-	system/sepolicy \
 	system/tools/aidl \
 	system/qcom
 
