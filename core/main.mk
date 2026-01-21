@@ -548,6 +548,7 @@ subdirs := \
 	external/libselinux \
 	external/selinux \
 	external/minijail \
+	external/libnfc-nci \
 	external/libsepol \
 	external/libunwind \
 	external/libunwind_llvm \
